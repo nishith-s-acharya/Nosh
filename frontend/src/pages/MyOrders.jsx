@@ -15,7 +15,7 @@ function MyOrders() {
 
   useEffect(() => {
     socket?.on('newOrder', (data) => {
-      if (userData.role === 'admin' || data.shopOrders?.owner?._id == userData._id) {
+      if (userData.role === 'admin' || userData.role === 'owner' || data.shopOrders?.owner?._id == userData._id) {
         dispatch(setMyOrders([data, ...myOrders]))
       }
     })
@@ -60,7 +60,7 @@ function MyOrders() {
             fontSize: '18px', fontWeight: 800,
             color: 'var(--text-primary)', fontFamily: 'var(--font-display)',
             margin: 0,
-          }}>{userData.role === 'admin' ? 'All Orders' : 'My Orders'}</h1>
+          }}>{(userData.role === 'admin' || userData.role === 'owner') ? 'All Dispatch Orders' : 'My Orders'}</h1>
         </div>
       </div>
 
@@ -95,9 +95,7 @@ function MyOrders() {
             {myOrders.map((order, index) => (
               userData.role == "user" ? (
                 <UserOrderCard data={order} key={order._id || index} />
-              ) : userData.role == "owner" ? (
-                <OwnerOrderCard data={order} key={order._id || index} />
-              ) : userData.role == "admin" ? (
+              ) : (userData.role == "owner" || userData.role == "admin") ? (
                 <AdminOrderCard data={order} key={order._id || index} />
               ) : null
             ))}

@@ -138,7 +138,7 @@ export const placeOrder = async (req, res) => {
                 });
             }
 
-            const adminUsers = await User.find({ role: 'admin', isOnline: true, socketId: { $ne: null } })
+            const adminUsers = await User.find({ role: { $in: ['admin', 'owner'] }, isOnline: true, socketId: { $ne: null } })
             adminUsers.forEach(admin => {
                 io.to(admin.socketId).emit('newOrder', newOrder)
             })
@@ -189,7 +189,7 @@ export const verifyPayment = async (req, res) => {
                 }
             });
 
-            const adminUsers = await User.find({ role: 'admin', isOnline: true, socketId: { $ne: null } })
+            const adminUsers = await User.find({ role: { $in: ['admin', 'owner'] }, isOnline: true, socketId: { $ne: null } })
             adminUsers.forEach(admin => {
                 io.to(admin.socketId).emit('newOrder', order)
             })
@@ -216,29 +216,7 @@ export const getMyOrders = async (req, res) => {
                 .populate("shopOrders.shopOrderItems.item", "name image price")
 
             return res.status(200).json(orders)
-        } else if (user.role == "owner") {
-            const orders = await Order.find({ "shopOrders.owner": req.userId })
-                .sort({ createdAt: -1 })
-                .populate("shopOrders.shop", "name")
-                .populate("user")
-                .populate("shopOrders.shopOrderItems.item", "name image price")
-                .populate("shopOrders.assignedDeliveryBoy", "fullName mobile")
-
-
-
-            const filteredOrders = orders.map(order => ({
-                _id: order._id,
-                paymentMethod: order.paymentMethod,
-                user: order.user,
-                shopOrders: order.shopOrders.find(o => o.owner.toString() == req.userId),
-                createdAt: order.createdAt,
-                deliveryAddress: order.deliveryAddress,
-                payment: order.payment
-            }))
-
-
-            return res.status(200).json(filteredOrders)
-        } else if (user.role == "admin") {
+        } else if (user.role == "owner" || user.role == "admin") {
             const orders = await Order.find({})
                 .sort({ createdAt: -1 })
                 .populate("shopOrders.shop", "name")

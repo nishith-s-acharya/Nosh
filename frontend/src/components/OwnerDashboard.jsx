@@ -3,7 +3,7 @@ import Nav from './NaV.JSX'
 import { useSelector } from 'react-redux'
 import { FaUtensils } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
-import { FaPen } from "react-icons/fa";
+import { FaPen, FaListAlt } from "react-icons/fa";
 import OwnerItemCard from './ownerItemCard';
 function OwnerDashboard() {
   const { myShopData } = useSelector(state => state.owner)
@@ -30,8 +30,22 @@ function OwnerDashboard() {
       }
 
       {myShopData &&
-        <div className='w-full flex flex-col items-center gap-6 px-4 sm:px-6'>
-          <h1 className='text-2xl sm:text-3xl text-gray-900 flex items-center gap-3 mt-8 text-center'><FaUtensils className='text-[#ff4d2d] w-14 h-14 ' />Welcome to {myShopData.name}</h1>
+        <div className='w-full flex flex-col items-center gap-6 px-4 sm:px-6 pb-12'>
+          {/* Dispatcher Banner */}
+          <div className='w-full max-w-3xl mt-6 bg-[#fc8019] bg-opacity-10 border border-[#fc8019] rounded-xl p-4 flex justify-between items-center shadow-sm'>
+            <div>
+              <h3 className='text-[#fc8019] font-bold text-lg m-0'>Platform Dispatcher Active</h3>
+              <p className='text-sm text-gray-700 m-0 mt-1'>You can now manage all platform orders, including local and Swiggy deliveries.</p>
+            </div>
+            <button 
+              onClick={() => navigate('/my-orders')}
+              className='bg-[#fc8019] text-white px-4 py-2 rounded-lg font-bold shadow-md hover:bg-orange-600 transition-colors flex items-center gap-2 whitespace-nowrap'
+            >
+              <FaListAlt /> Manage Orders
+            </button>
+          </div>
+
+          <h1 className='text-2xl sm:text-3xl text-gray-900 flex items-center gap-3 mt-4 text-center'><FaUtensils className='text-[#ff4d2d] w-14 h-14 ' />Welcome to {myShopData.name}</h1>
 
           <div className='bg-white shadow-lg rounded-xl overflow-hidden border border-orange-100 hover:shadow-2xl transition-all duration-300 w-full max-w-3xl relative'>
             <div className='absolute top-4 right-4 bg-[#ff4d2d] text-white p-2 rounded-full shadow-md hover:bg-orange-600 transition-colors cursor-pointer' onClick={()=>navigate("/create-edit-shop")}>
