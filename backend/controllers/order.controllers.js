@@ -114,27 +114,34 @@ export const placeOrder = async (req, res) => {
         if (hasLocalShops) {
             await newOrder.populate("shopOrders.shopOrderItems.item", "name image price")
             await newOrder.populate("shopOrders.shop", "name")
-            await newOrder.populate("shopOrders.owner", "name socketId")
+            await newOrder.populate("shopOrders.owner", "fullName socketId")
         }
-        await newOrder.populate("user", "name email mobile")
+        await newOrder.populate("user", "fullName email mobile")
 
         const io = req.app.get('io')
 
-        if (io && hasLocalShops) {
-            newOrder.shopOrders.forEach(shopOrder => {
-                const ownerSocketId = shopOrder.owner?.socketId
-                if (ownerSocketId) {
-                    io.to(ownerSocketId).emit('newOrder', {
-                        _id: newOrder._id,
-                        paymentMethod: newOrder.paymentMethod,
-                        user: newOrder.user,
-                        shopOrders: shopOrder,
-                        createdAt: newOrder.createdAt,
-                        deliveryAddress: newOrder.deliveryAddress,
-                        payment: newOrder.payment
-                    })
-                }
-            });
+        if (io) {
+            if (hasLocalShops) {
+                newOrder.shopOrders.forEach(shopOrder => {
+                    const ownerSocketId = shopOrder.owner?.socketId
+                    if (ownerSocketId) {
+                        io.to(ownerSocketId).emit('newOrder', {
+                            _id: newOrder._id,
+                            paymentMethod: newOrder.paymentMethod,
+                            user: newOrder.user,
+                            shopOrders: shopOrder,
+                            createdAt: newOrder.createdAt,
+                            deliveryAddress: newOrder.deliveryAddress,
+                            payment: newOrder.payment
+                        })
+                    }
+                });
+            }
+
+            const adminUsers = await User.find({ role: 'admin', isOnline: true, socketId: { $ne: null } })
+            adminUsers.forEach(admin => {
+                io.to(admin.socketId).emit('newOrder', newOrder)
+            })
         }
 
         return res.status(201).json(newOrder)
@@ -161,14 +168,14 @@ export const verifyPayment = async (req, res) => {
 
         await order.populate("shopOrders.shopOrderItems.item", "name image price")
         await order.populate("shopOrders.shop", "name")
-        await order.populate("shopOrders.owner", "name socketId")
-        await order.populate("user", "name email mobile")
+        await order.populate("shopOrders.owner", "fullName socketId")
+        await order.populate("user", "fullName email mobile")
 
         const io = req.app.get('io')
 
         if (io) {
             order.shopOrders.forEach(shopOrder => {
-                const ownerSocketId = shopOrder.owner.socketId
+                const ownerSocketId = shopOrder.owner?.socketId
                 if (ownerSocketId) {
                     io.to(ownerSocketId).emit('newOrder', {
                         _id: order._id,
@@ -181,6 +188,11 @@ export const verifyPayment = async (req, res) => {
                     })
                 }
             });
+
+            const adminUsers = await User.find({ role: 'admin', isOnline: true, socketId: { $ne: null } })
+            adminUsers.forEach(admin => {
+                io.to(admin.socketId).emit('newOrder', order)
+            })
         }
 
 

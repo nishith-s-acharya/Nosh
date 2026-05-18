@@ -15,7 +15,7 @@ function MyOrders() {
 
   useEffect(() => {
     socket?.on('newOrder', (data) => {
-      if (data.shopOrders?.owner?._id == userData._id) {
+      if (userData.role === 'admin' || data.shopOrders?.owner?._id == userData._id) {
         dispatch(setMyOrders([data, ...myOrders]))
       }
     })
