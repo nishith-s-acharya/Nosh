@@ -5,6 +5,7 @@ import { FiPackage } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom';
 import UserOrderCard from '../components/UserOrderCard';
 import OwnerOrderCard from '../components/OwnerOrderCard';
+import AdminOrderCard from '../components/AdminOrderCard';
 import { setMyOrders, updateOrderStatus, updateRealtimeOrderStatus } from '../redux/userSlice';
 
 function MyOrders() {
@@ -59,7 +60,7 @@ function MyOrders() {
             fontSize: '18px', fontWeight: 800,
             color: 'var(--text-primary)', fontFamily: 'var(--font-display)',
             margin: 0,
-          }}>My Orders</h1>
+          }}>{userData.role === 'admin' ? 'All Orders' : 'My Orders'}</h1>
         </div>
       </div>
 
@@ -96,6 +97,8 @@ function MyOrders() {
                 <UserOrderCard data={order} key={order._id || index} />
               ) : userData.role == "owner" ? (
                 <OwnerOrderCard data={order} key={order._id || index} />
+              ) : userData.role == "admin" ? (
+                <AdminOrderCard data={order} key={order._id || index} />
               ) : null
             ))}
           </div>

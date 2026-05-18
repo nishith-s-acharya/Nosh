@@ -226,6 +226,16 @@ export const getMyOrders = async (req, res) => {
 
 
             return res.status(200).json(filteredOrders)
+        } else if (user.role == "admin") {
+            const orders = await Order.find({})
+                .sort({ createdAt: -1 })
+                .populate("shopOrders.shop", "name")
+                .populate("user", "fullName email mobile")
+                .populate("shopOrders.owner", "fullName email")
+                .populate("shopOrders.shopOrderItems.item", "name image price")
+                .populate("shopOrders.assignedDeliveryBoy", "fullName mobile")
+
+            return res.status(200).json(orders)
         }
 
     } catch (error) {
