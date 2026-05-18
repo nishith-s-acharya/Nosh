@@ -21,6 +21,7 @@ import useGetMyOrders from './hooks/useGetMyOrders'
 import useUpdateLocation from './hooks/useUpdateLocation'
 import TrackOrderPage from './pages/TrackOrderPage'
 import Shop from './pages/Shop'
+import SwiggyShop from './pages/SwiggyShop'
 import { useEffect } from 'react'
 import { io } from 'socket.io-client'
 import { setSocket } from './redux/userSlice'
@@ -65,6 +66,7 @@ return ()=>{
 <Route path='/my-orders' element={userData?<MyOrders/>:<Navigate to={"/signin"}/>}/>
 <Route path='/track-order/:orderId' element={userData?<TrackOrderPage/>:<Navigate to={"/signin"}/>}/>
 <Route path='/shop/:shopId' element={userData?<Shop/>:<Navigate to={"/signin"}/>}/>
+<Route path='/swiggy-shop/:restaurantId' element={userData?<SwiggyShop/>:<Navigate to={"/signin"}/>}/>
    </Routes>
   )
 }

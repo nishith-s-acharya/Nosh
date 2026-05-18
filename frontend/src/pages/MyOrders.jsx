@@ -1,62 +1,105 @@
 import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { IoIosArrowRoundBack } from "react-icons/io";
+import { FaArrowLeft } from 'react-icons/fa'
+import { FiPackage } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom';
 import UserOrderCard from '../components/UserOrderCard';
 import OwnerOrderCard from '../components/OwnerOrderCard';
 import { setMyOrders, updateOrderStatus, updateRealtimeOrderStatus } from '../redux/userSlice';
 
-
 function MyOrders() {
-  const { userData, myOrders,socket} = useSelector(state => state.user)
+  const { userData, myOrders, socket } = useSelector(state => state.user)
   const navigate = useNavigate()
-const dispatch=useDispatch()
-  useEffect(()=>{
-socket?.on('newOrder',(data)=>{
-if(data.shopOrders?.owner._id==userData._id){
-dispatch(setMyOrders([data,...myOrders]))
-}
-})
+  const dispatch = useDispatch()
 
-socket?.on('update-status',({orderId,shopId,status,userId})=>{
-if(userId==userData._id){
-  dispatch(updateRealtimeOrderStatus({orderId,shopId,status}))
-}
-})
+  useEffect(() => {
+    socket?.on('newOrder', (data) => {
+      if (data.shopOrders?.owner?._id == userData._id) {
+        dispatch(setMyOrders([data, ...myOrders]))
+      }
+    })
+    socket?.on('update-status', ({ orderId, shopId, status, userId }) => {
+      if (userId == userData._id) {
+        dispatch(updateRealtimeOrderStatus({ orderId, shopId, status }))
+      }
+    })
+    return () => {
+      socket?.off('newOrder')
+      socket?.off('update-status')
+    }
+  }, [socket])
 
-return ()=>{
-  socket?.off('newOrder')
-  socket?.off('update-status')
-}
-  },[socket])
-
-
-
-  
   return (
-    <div className='"w-full min-h-screen bg-[#fff9f6] flex justify-center px-4'>
-      <div className='w-full max-w-[800px] p-4'>
+    <div style={{
+      minHeight: '100vh',
+      background: '#f1f1f6',
+      fontFamily: 'var(--font-main)',
+    }}>
+      {/* Sticky Header */}
+      <div style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        background: 'white',
+        padding: '14px 16px',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+      }}>
+        <div style={{ maxWidth: '800px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={() => navigate("/")}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              display: 'flex', alignItems: 'center',
+              color: 'var(--text-primary)',
+            }}
+          >
+            <FaArrowLeft size={16} />
+          </button>
+          <h1 style={{
+            fontSize: '18px', fontWeight: 800,
+            color: 'var(--text-primary)', fontFamily: 'var(--font-display)',
+            margin: 0,
+          }}>My Orders</h1>
+        </div>
+      </div>
 
-        <div className='flex items-center gap-[20px] mb-6 '>
-          <div className=' z-[10] ' onClick={() => navigate("/")}>
-            <IoIosArrowRoundBack size={35} className='text-[#ff4d2d]' />
+      {/* Orders list */}
+      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '16px 16px 40px' }}>
+        {!myOrders || myOrders.length === 0 ? (
+          <div style={{
+            background: 'white', borderRadius: '20px',
+            padding: '60px 20px', textAlign: 'center',
+            marginTop: '20px',
+          }}>
+            <FiPackage size={56} style={{ color: '#d4d5d9', margin: '0 auto 16px' }} />
+            <h2 style={{
+              fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)',
+              fontFamily: 'var(--font-display)', margin: '0 0 6px',
+            }}>No orders yet</h2>
+            <p style={{
+              fontSize: '14px', color: 'var(--text-muted)', margin: '0 0 24px',
+            }}>Your order history will appear here</p>
+            <button onClick={() => navigate("/")} style={{
+              background: '#fc8019', color: 'white',
+              border: 'none', borderRadius: '12px',
+              padding: '14px 28px', fontSize: '15px',
+              fontWeight: 700, cursor: 'pointer',
+              fontFamily: 'var(--font-display)',
+            }}>
+              EXPLORE RESTAURANTS
+            </button>
           </div>
-          <h1 className='text-2xl font-bold  text-start'>My Orders</h1>
-        </div>
-        <div className='space-y-6'>
-          {myOrders?.map((order,index)=>(
-            userData.role=="user" ?
-            (
-              <UserOrderCard data={order} key={index}/>
-            )
-            :
-            userData.role=="owner"? (
-              <OwnerOrderCard data={order} key={index}/>
-            )
-            :
-            null
-          ))}
-        </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {myOrders.map((order, index) => (
+              userData.role == "user" ? (
+                <UserOrderCard data={order} key={order._id || index} />
+              ) : userData.role == "owner" ? (
+                <OwnerOrderCard data={order} key={order._id || index} />
+              ) : null
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

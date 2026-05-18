@@ -41,7 +41,8 @@ const userSlice = createSlice({
       const cartItem = action.payload
       const existingItem = state.cartItems.find(i => i.id == cartItem.id)
       if (existingItem) {
-        existingItem.quantity += cartItem.quantity
+        // Item already in cart — update quantity (replace, not accumulate)
+        existingItem.quantity = cartItem.quantity
       } else {
         state.cartItems.push(cartItem)
       }
@@ -101,9 +102,14 @@ const userSlice = createSlice({
 
     setSearchItems: (state, action) => {
       state.searchItems = action.payload
+    },
+
+    clearCart: (state) => {
+      state.cartItems = []
+      state.totalAmount = 0
     }
   }
 })
 
-export const { setUserData, setCurrentAddress, setCurrentCity, setCurrentState, setShopsInMyCity, setItemsInMyCity, addToCart, updateQuantity, removeCartItem, setMyOrders, addMyOrder, updateOrderStatus, setSearchItems, setTotalAmount, setSocket ,updateRealtimeOrderStatus} = userSlice.actions
+export const { setUserData, setCurrentAddress, setCurrentCity, setCurrentState, setShopsInMyCity, setItemsInMyCity, addToCart, updateQuantity, removeCartItem, clearCart, setMyOrders, addMyOrder, updateOrderStatus, setSearchItems, setTotalAmount, setSocket, updateRealtimeOrderStatus } = userSlice.actions
 export default userSlice.reducer

@@ -18,7 +18,9 @@ function useGetMyshop() {
         console.log(error)
     }
 }
-fetchShop()
+if(userData && userData.role==="owner"){
+  fetchShop()
+}
  
   },[userData])
 }

@@ -10,6 +10,7 @@ import userRouter from "./routes/user.routes.js"
 import itemRouter from "./routes/item.routes.js"
 import shopRouter from "./routes/shop.routes.js"
 import orderRouter from "./routes/order.routes.js"
+import swiggyRouter from "./routes/swiggy.routes.js"
 import http from "http"
 import { Server } from "socket.io"
 import { socketHandler } from "./socket.js"
@@ -17,9 +18,11 @@ import { socketHandler } from "./socket.js"
 const app=express()
 const server=http.createServer(app)
 
+const allowedOrigins=["http://localhost:5173","http://localhost:5174"]
+
 const io=new Server(server,{
    cors:{
-    origin:"http://localhost:5173",
+    origin:allowedOrigins,
     credentials:true,
     methods:['POST','GET']
 }
@@ -31,7 +34,7 @@ app.set("io",io)
 
 const port=process.env.PORT || 5000
 app.use(cors({
-    origin:"http://localhost:5173",
+    origin:allowedOrigins,
     credentials:true
 }))
 app.use(express.json())
@@ -41,6 +44,7 @@ app.use("/api/user",userRouter)
 app.use("/api/shop",shopRouter)
 app.use("/api/item",itemRouter)
 app.use("/api/order",orderRouter)
+app.use("/api/swiggy",swiggyRouter)
 
 socketHandler(io)
 server.listen(port,()=>{

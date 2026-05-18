@@ -25,33 +25,58 @@ export const placeOrder = async (req, res) => {
         const groupItemsByShop = {}
 
         cartItems.forEach(item => {
-            const shopId = item.shop
+            const shopId = item.shop || 'unknown'
             if (!groupItemsByShop[shopId]) {
                 groupItemsByShop[shopId] = []
             }
             groupItemsByShop[shopId].push(item)
         });
 
-        const shopOrders = await Promise.all(Object.keys(groupItemsByShop).map(async (shopId) => {
-            const shop = await Shop.findById(shopId).populate("owner")
-            if (!shop) {
-                return res.status(400).json({ message: "shop not found" })
-            }
+        const shopOrders = []
+
+        for (const shopId of Object.keys(groupItemsByShop)) {
             const items = groupItemsByShop[shopId]
             const subtotal = items.reduce((sum, i) => sum + Number(i.price) * Number(i.quantity), 0)
-            return {
-                shop: shop._id,
-                owner: shop.owner._id,
-                subtotal,
-                shopOrderItems: items.map((i) => ({
-                    item: i.id,
-                    price: i.price,
-                    quantity: i.quantity,
-                    name: i.name
-                }))
+
+            // Check if these are Swiggy items (id starts with "swiggy_")
+            const isSwiggyOrder = items.some(i => String(i.id).startsWith("swiggy_"))
+
+            if (isSwiggyOrder) {
+                // Swiggy items — no DB shop/owner lookup needed
+                // shopId here is actually the restaurant name string from the cart
+                const restaurantName = shopId !== 'unknown' ? shopId : 'Restaurant'
+                shopOrders.push({
+                    shopName: restaurantName,
+                    subtotal,
+                    shopOrderItems: items.map((i) => ({
+                        price: i.price,
+                        quantity: i.quantity,
+                        name: i.name,
+                        image: i.image,
+                        shopName: restaurantName
+                    }))
+                })
+            } else {
+                // Local shop items — lookup shop from DB
+                const shop = await Shop.findById(shopId).populate("owner")
+                if (!shop) {
+                    return res.status(400).json({ message: "shop not found" })
+                }
+                shopOrders.push({
+                    shop: shop._id,
+                    owner: shop.owner._id,
+                    subtotal,
+                    shopOrderItems: items.map((i) => ({
+                        item: i.id,
+                        price: i.price,
+                        quantity: i.quantity,
+                        name: i.name,
+                        image: i.image
+                    }))
+                })
             }
         }
-        ))
+
 
         if (paymentMethod == "online") {
             const razorOrder = await instance.orders.create({
@@ -84,16 +109,20 @@ export const placeOrder = async (req, res) => {
             shopOrders
         })
 
-        await newOrder.populate("shopOrders.shopOrderItems.item", "name image price")
-        await newOrder.populate("shopOrders.shop", "name")
-        await newOrder.populate("shopOrders.owner", "name socketId")
+        // Only populate refs that exist (Swiggy orders don't have shop/owner/item ObjectIds)
+        const hasLocalShops = newOrder.shopOrders.some(so => so.shop)
+        if (hasLocalShops) {
+            await newOrder.populate("shopOrders.shopOrderItems.item", "name image price")
+            await newOrder.populate("shopOrders.shop", "name")
+            await newOrder.populate("shopOrders.owner", "name socketId")
+        }
         await newOrder.populate("user", "name email mobile")
 
         const io = req.app.get('io')
 
-        if (io) {
+        if (io && hasLocalShops) {
             newOrder.shopOrders.forEach(shopOrder => {
-                const ownerSocketId = shopOrder.owner.socketId
+                const ownerSocketId = shopOrder.owner?.socketId
                 if (ownerSocketId) {
                     io.to(ownerSocketId).emit('newOrder', {
                         _id: newOrder._id,
@@ -107,8 +136,6 @@ export const placeOrder = async (req, res) => {
                 }
             });
         }
-
-
 
         return res.status(201).json(newOrder)
     } catch (error) {
@@ -187,15 +214,15 @@ export const getMyOrders = async (req, res) => {
 
 
 
-            const filteredOrders = orders.map((order => ({
+            const filteredOrders = orders.map(order => ({
                 _id: order._id,
                 paymentMethod: order.paymentMethod,
                 user: order.user,
-                shopOrders: order.shopOrders.find(o => o.owner._id == req.userId),
+                shopOrders: order.shopOrders.find(o => o.owner.toString() == req.userId),
                 createdAt: order.createdAt,
                 deliveryAddress: order.deliveryAddress,
                 payment: order.payment
-            })))
+            }))
 
 
             return res.status(200).json(filteredOrders)
@@ -453,7 +480,7 @@ export const getCurrentOrder = async (req, res) => {
 
 
     } catch (error) {
-
+        return res.status(500).json({ message: `get current order error ${error}` })
     }
 }
 
@@ -532,7 +559,53 @@ export const verifyDeliveryOtp = async (req, res) => {
     }
 }
 
+export const getTodayDeliveries=async (req,res) => {
+    try {
+        const deliveryBoyId=req.userId
+        const startsOfDay=new Date()
+        startsOfDay.setHours(0,0,0,0)
 
+        const orders=await Order.find({
+           "shopOrders.assignedDeliveryBoy":deliveryBoyId,
+           "shopOrders.status":"delivered",
+           "shopOrders.deliveredAt":{$gte:startsOfDay}
+        }).lean()
+
+     let todaysDeliveries=[] 
+     
+     orders.forEach(order=>{
+        order.shopOrders.forEach(shopOrder=>{
+            if(shopOrder.assignedDeliveryBoy==deliveryBoyId &&
+                shopOrder.status=="delivered" &&
+                shopOrder.deliveredAt &&
+                shopOrder.deliveredAt>=startsOfDay
+            ){
+                todaysDeliveries.push(shopOrder)
+            }
+        })
+     })
+
+let stats={}
+
+todaysDeliveries.forEach(shopOrder=>{
+    const hour=new Date(shopOrder.deliveredAt).getHours()
+    stats[hour]=(stats[hour] || 0) + 1
+})
+
+let formattedStats=Object.keys(stats).map(hour=>({
+ hour:parseInt(hour),
+ count:stats[hour]   
+}))
+
+formattedStats.sort((a,b)=>a.hour-b.hour)
+
+return res.status(200).json(formattedStats)
+  
+
+    } catch (error) {
+        return res.status(500).json({ message: `today deliveries error ${error}` }) 
+    }
+}
 
 
 

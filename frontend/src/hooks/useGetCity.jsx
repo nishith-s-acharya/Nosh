@@ -11,17 +11,31 @@ function useGetCity() {
     const apiKey=import.meta.env.VITE_GEOAPIKEY
     useEffect(()=>{
 navigator.geolocation.getCurrentPosition(async (position)=>{
-    console.log(position)
+    console.log("📍 Got position:", position.coords.latitude, position.coords.longitude)
     const latitude=position.coords.latitude
     const longitude=position.coords.longitude
     dispatch(setLocation({lat:latitude,lon:longitude}))
+    try {
     const result=await axios.get(`https://api.geoapify.com/v1/geocode/reverse?lat=${latitude}&lon=${longitude}&format=json&apiKey=${apiKey}`)
-  console.log(result.data)
+  console.log("🏙️ Geocoding result:", result.data?.results?.[0]?.city)
     dispatch(setCurrentCity(result?.data?.results[0].city||result?.data?.results[0].county
 ))
     dispatch(setCurrentState(result?.data?.results[0].state))
      dispatch(setCurrentAddress(result?.data?.results[0].address_line2 || result?.data?.results[0].address_line1 ))
   dispatch(setAddress(result?.data?.results[0].address_line2))
+    } catch (geoError) {
+        console.log("❌ Geocoding API failed:", geoError.message)
+        dispatch(setCurrentCity('Your Location'))
+    }
+}, (error) => {
+    console.log('❌ Geolocation denied/failed:', error.code, error.message)
+    // Fallback to default location (Bangalore)
+    dispatch(setLocation({lat:12.9716, lon:77.5946}))
+    dispatch(setCurrentCity('Bangalore'))
+}, {
+    enableHighAccuracy: false,
+    timeout: 10000,
+    maximumAge: 300000
 })
     },[userData])
 }

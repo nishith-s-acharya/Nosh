@@ -1,41 +1,123 @@
 import React from 'react'
-import { FaMinus } from "react-icons/fa";
-import { FaPlus } from "react-icons/fa";
-import { CiTrash } from "react-icons/ci";
-import { useDispatch } from 'react-redux';
-import { removeCartItem, updateQuantity } from '../redux/userSlice';
-function CartItemCard({data}) {
-    const dispatch=useDispatch()
-    const handleIncrease=(id,currentQty)=>{
-       dispatch(updateQuantity({id,quantity:currentQty+1}))
+import { FaMinus, FaPlus } from 'react-icons/fa'
+import { useDispatch } from 'react-redux'
+import { removeCartItem, updateQuantity } from '../redux/userSlice'
+
+function CartItemCard({ data }) {
+  const dispatch = useDispatch()
+
+  const handleIncrease = () => {
+    dispatch(updateQuantity({ id: data.id, quantity: data.quantity + 1 }))
+  }
+
+  const handleDecrease = () => {
+    if (data.quantity > 1) {
+      dispatch(updateQuantity({ id: data.id, quantity: data.quantity - 1 }))
+    } else {
+      dispatch(removeCartItem(data.id))
     }
-      const handleDecrease=(id,currentQty)=>{
-        if(currentQty>1){
-  dispatch(updateQuantity({id,quantity:currentQty-1}))
-        }
-        
-    }
+  }
+
+  const isVeg = data.foodType === 'veg'
+  const lineTotal = data.price * data.quantity
+
   return (
-    <div className='flex items-center justify-between bg-white p-4 rounded-xl shadow border'>
-      <div className='flex items-center gap-4'>
-        <img src={data.image} alt="" className='w-20 h-20 object-cover rounded-lg border'/>
-        <div>
-            <h1 className='font-medium text-gray-800'>{data.name}</h1>
-            <p className='text-sm text-gray-500'>₹{data.price} x {data.quantity}</p>
-            <p className="font-bold text-gray-900">₹{data.price*data.quantity}</p>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '16px 0',
+      fontFamily: 'var(--font-main)',
+      gap: '12px',
+    }}>
+      {/* Left: Veg icon + Info */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flex: 1, minWidth: 0 }}>
+        {/* Veg/Non-veg marker */}
+        <div style={{
+          width: '16px',
+          height: '16px',
+          border: `2px solid ${isVeg !== false && isVeg !== undefined ? '#0f8a65' : '#e43b4f'}`,
+          borderRadius: '3px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          marginTop: '3px',
+        }}>
+          <div style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            background: isVeg !== false && isVeg !== undefined ? '#0f8a65' : '#e43b4f',
+          }} />
+        </div>
+
+        {/* Item info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h3 style={{
+            fontWeight: 600,
+            fontSize: '15px',
+            color: 'var(--text-primary)',
+            margin: 0,
+            lineHeight: 1.3,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}>{data.name}</h3>
+
+          <p style={{
+            fontSize: '14px',
+            fontWeight: 500,
+            color: 'var(--text-primary)',
+            margin: '4px 0 0',
+          }}>₹{lineTotal}</p>
         </div>
       </div>
-      <div className='flex items-center gap-3'>
-        <button className='p-2 cursor-pointer bg-gray-100 rounded-full hover:bg-gray-200' onClick={()=>handleDecrease(data.id,data.quantity)}>
-        <FaMinus size={12}/>
+
+      {/* Right: Quantity stepper */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        border: '1px solid #d4d5d9',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        flexShrink: 0,
+      }}>
+        <button
+          onClick={handleDecrease}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: '8px 12px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            color: data.quantity <= 1 ? '#d4d5d9' : '#60b246',
+          }}
+        >
+          <FaMinus size={10} />
         </button>
-        <span>{data.quantity}</span>
-        <button className='p-2 cursor-pointer bg-gray-100 rounded-full hover:bg-gray-200'  onClick={()=>handleIncrease(data.id,data.quantity)}>
-        <FaPlus size={12}/>
-        </button>
-        <button className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200"
- onClick={()=>dispatch(removeCartItem(data.id))}>
-<CiTrash size={18}/>
+        <span style={{
+          fontWeight: 700,
+          fontSize: '14px',
+          color: '#60b246',
+          minWidth: '20px',
+          textAlign: 'center',
+          fontFamily: 'var(--font-display)',
+        }}>{data.quantity}</span>
+        <button
+          onClick={handleIncrease}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: '8px 12px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            color: '#60b246',
+          }}
+        >
+          <FaPlus size={10} />
         </button>
       </div>
     </div>

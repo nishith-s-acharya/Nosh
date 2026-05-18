@@ -4,17 +4,24 @@ const shopOrderItemSchema = new mongoose.Schema({
     item:{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Item",
-        required:true
+        default: null
     },
     name:String,
     price:Number,
-    quantity:Number
+    quantity:Number,
+    image:String,
+    shopName:String
 }, { timestamps: true })
+
 
 const shopOrderSchema = new mongoose.Schema({
     shop: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Shop"
+    },
+    shopName: {
+        type: String,
+        default: null
     },
     owner: {
         type: mongoose.Schema.Types.ObjectId,

@@ -1,11 +1,12 @@
 import React from 'react'
 
-function CategoryCard({name,image,onClick}) {
+function CategoryCard({name,image,onClick,isActive}) {
   return (
-    <div className='w-[120px] h-[120px] md:w-[180px] md:h-[180px] rounded-2xl border-2 border-[#ff4d2d] shrink-0 overflow-hidden bg-white shadow-xl shadow-gray-200 hover:shadow-lg transition-shadow relative' onClick={onClick}>
-     <img src={image} alt="" className=' w-full h-full object-cover transform hover:scale-110 transition-transform duration-300'/>
-     <div className='absolute  bottom-0 w-full left-0  bg-[#ffffff96] bg-opacity-95 px-3 py-1 rounded-t-xl text-center shadow text-sm font-medium text-gray-800 backdrop-blur'>
-{name}
+    <div className={`w-[130px] h-[140px] md:w-[160px] md:h-[170px] rounded-2xl shrink-0 overflow-hidden bg-white cursor-pointer relative group transition-all duration-300 hover:-translate-y-1 ${isActive ? 'ring-2 ring-[#ff4d2d] shadow-lg shadow-orange-100' : 'shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] border border-gray-100'}`} onClick={onClick}>
+     <img src={image} alt={name} className='w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500'/>
+     <div className='absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent' />
+     <div className='absolute bottom-0 w-full left-0 px-3 py-2.5 text-center'>
+       <span className='text-sm font-semibold text-white drop-shadow-md' style={{fontFamily: 'var(--font-main)'}}>{name}</span>
      </div>
     </div>
   )
