@@ -32,13 +32,26 @@ function UserOrderCard({ data }) {
 
   const getStatusInfo = (status) => {
     switch (status?.toLowerCase()) {
-      case 'delivered': return { color: '#60b246', bg: '#e8f5e9', label: 'Delivered' }
-      case 'pending': return { color: '#db7c38', bg: '#fff3e0', label: 'Preparing' }
+      case 'pending': return { color: '#db7c38', bg: '#fff3e0', label: 'Order Placed' }
+      case 'preparing': return { color: '#f57c00', bg: '#fff8e1', label: 'Preparing' }
       case 'out of delivery': return { color: '#1e88e5', bg: '#e3f2fd', label: 'On the way' }
+      case 'delivered': return { color: '#60b246', bg: '#e8f5e9', label: 'Delivered' }
       case 'cancelled': return { color: '#e23744', bg: '#ffebee', label: 'Cancelled' }
       default: return { color: '#93959f', bg: '#f5f5f6', label: status || 'Processing' }
     }
   }
+
+  const getStatusStep = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'pending': return 0
+      case 'preparing': return 1
+      case 'out of delivery': return 2
+      case 'delivered': return 3
+      default: return 0
+    }
+  }
+
+  const STATUS_STEPS = ['Order Placed', 'Preparing', 'On the way', 'Delivered']
 
   // Get first shop order status for the header
   const primaryStatus = getStatusInfo(
@@ -119,6 +132,41 @@ function UserOrderCard({ data }) {
           {primaryStatus.label}
         </div>
       </div>
+
+      {/* Status Progress Tracker */}
+      {primaryStatus.label !== 'Cancelled' && (
+        <div style={{ padding: '0 20px 16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+            <div style={{ position: 'absolute', top: '12px', left: '12px', right: '12px', height: '2px', background: '#f0f0f0', zIndex: 0 }} />
+            <div style={{
+              position: 'absolute', top: '12px', left: '12px', height: '2px', background: '#fc8019', zIndex: 1,
+              width: `${(getStatusStep(data.shopOrders?.[0]?.status || data.shopOrders?.status) / (STATUS_STEPS.length - 1)) * 100}%`,
+              transition: 'width 0.4s ease',
+            }} />
+            {STATUS_STEPS.map((step, idx) => {
+              const currentStep = getStatusStep(data.shopOrders?.[0]?.status || data.shopOrders?.status)
+              const done = idx <= currentStep
+              return (
+                <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 2, flex: 1 }}>
+                  <div style={{
+                    width: '24px', height: '24px', borderRadius: '50%',
+                    background: done ? '#fc8019' : '#f0f0f0',
+                    border: `2px solid ${done ? '#fc8019' : '#ddd'}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {done && (
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </div>
+                  <span style={{ fontSize: '10px', fontWeight: done ? 700 : 500, color: done ? '#fc8019' : '#aaa', marginTop: '4px', textAlign: 'center' }}>{step}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ─── Items ─── */}
       <div style={{
