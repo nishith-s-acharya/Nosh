@@ -33,7 +33,7 @@ function OwnerOrderCard({ data }) {
     setUpdating(true)
     try {
       const result = await axios.post(
-        `${serverUrl}/api/order/update-status/${orderId}/${shopId}`,
+        `${serverUrl}/api/order/update-status/${orderId}/${encodeURIComponent(shopId)}`,
         { status },
         { withCredentials: true }
       )
@@ -153,7 +153,7 @@ function OwnerOrderCard({ data }) {
           <select
             value={shopOrder?.status}
             disabled={updating}
-            onChange={(e) => handleUpdateStatus(data._id, shopOrder?.shop?._id || shopOrder?.shop, e.target.value)}
+            onChange={(e) => handleUpdateStatus(data._id, shopOrder?.shop?._id || shopOrder?.shopName || shopOrder?.shop, e.target.value)}
             style={{ 
               border: '2px solid #fc8019', borderRadius: '10px', padding: '8px 12px', 
               fontSize: '13px', fontWeight: 700, color: '#fc8019', background: 'white', 

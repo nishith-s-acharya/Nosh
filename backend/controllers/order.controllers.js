@@ -250,13 +250,16 @@ export const updateOrderStatus = async (req, res) => {
         const { status } = req.body
         const order = await Order.findById(orderId)
 
-        const shopOrder = order.shopOrders.find(o => o.shop == shopId)
+        const shopOrder = order.shopOrders.find(o => 
+            (o.shop && String(o.shop) === String(shopId)) || 
+            (o.shopName === shopId)
+        )
         if (!shopOrder) {
             return res.status(400).json({ message: "shop order not found" })
         }
         shopOrder.status = status
         let deliveryBoysPayload = []
-        if (status == "out of delivery" && !shopOrder.assignment) {
+        if (status == "out of delivery" && !shopOrder.assignment && shopOrder.shop) {
             const { longitude, latitude } = order.deliveryAddress
             const nearByDeliveryBoys = await User.find({
                 role: "deliveryBoy",
@@ -333,7 +336,10 @@ export const updateOrderStatus = async (req, res) => {
 
 
         await order.save()
-        const updatedShopOrder = order.shopOrders.find(o => o.shop == shopId)
+        const updatedShopOrder = order.shopOrders.find(o => 
+            (o.shop && String(o.shop) === String(shopId)) || 
+            (o.shopName === shopId)
+        )
         await order.populate("shopOrders.shop", "name")
         await order.populate("shopOrders.assignedDeliveryBoy", "fullName email mobile")
         await order.populate("user", "socketId")
@@ -344,7 +350,7 @@ export const updateOrderStatus = async (req, res) => {
             if (userSocketId) {
                 io.to(userSocketId).emit('update-status', {
                     orderId: order._id,
-                    shopId: updatedShopOrder.shop._id,
+                    shopId: updatedShopOrder.shop?._id || updatedShopOrder.shopName,
                     status: updatedShopOrder.status,
                     userId: order.user._id
                 })

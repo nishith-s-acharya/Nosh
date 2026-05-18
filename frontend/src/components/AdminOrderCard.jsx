@@ -31,7 +31,7 @@ function AdminOrderCard({ data }) {
     setUpdating(prev => ({ ...prev, [shopId]: true }))
     try {
       await axios.post(
-        `${serverUrl}/api/order/update-status/${orderId}/${shopId}`,
+        `${serverUrl}/api/order/update-status/${orderId}/${encodeURIComponent(shopId)}`,
         { status },
         { withCredentials: true }
       )
@@ -77,7 +77,7 @@ function AdminOrderCard({ data }) {
         {shopOrders.map((so, idx) => {
           if (!so) return null
           const statusInfo = getStatusInfo(so.status)
-          const shopId = so.shop?._id || so.shop
+          const shopId = so.shop?._id || so.shopName || so.shop
           return (
             <div key={idx} style={{ background: 'white', padding: '14px 20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
